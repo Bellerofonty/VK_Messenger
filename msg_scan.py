@@ -2,6 +2,8 @@
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
+import vk
+
 class MsgScan(QThread):
     ''' Запросы и извлечение информации из ответов'''
 
@@ -36,6 +38,13 @@ class MsgScan(QThread):
         "unread_count"
         для каждого диалога
         '''
+        session = vk.Session(access_token=token)
+        api = vk.API(session, v='5.35')
+        response_dialogs = api.messages.getConversations(filter='unread')
+        unread_count = ((response_dialogs.get('items')[0]).get('conversation')).get('unread_count')
+        id = (((response_dialogs.get('items')[0]).get('conversation')).get('peer')).get('id')
+        # print(id)
+        # print(unread_count)
 
 ##        return unread_conv_list
 
