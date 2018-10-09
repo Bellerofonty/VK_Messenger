@@ -39,7 +39,7 @@ class MsgScan(QThread):
         для каждого диалога
         '''
         session = vk.Session(access_token=token)
-        api = vk.API(session, v='5.35')
+        api = vk.API(session, v='5.85')
         response_dialogs = api.messages.getConversations(filter='unread')
         unread_count = ((response_dialogs.get('items')[0]).get('conversation')).get('unread_count')
         id = (((response_dialogs.get('items')[0]).get('conversation')).get('peer')).get('id')
