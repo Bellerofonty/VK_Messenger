@@ -40,11 +40,14 @@ class MsgScan(QThread):
         '''
         session = vk.Session(access_token=token)
         api = vk.API(session, v='5.85')
+        # Получаем непрочитанные диалоги
         response_dialogs = api.messages.getConversations(filter='unread')
-        unread_count = ((response_dialogs.get('items')[0]).get('conversation')).get('unread_count')
-        id = (((response_dialogs.get('items')[0]).get('conversation')).get('peer')).get('id')
-        # print(id)
-        # print(unread_count)
+        for count in range(response_dialogs.get('count')):
+            # print(response_dialogs)
+            unread_count = ((response_dialogs.get('items')[count]).get('conversation')).get('unread_count')
+            id = (((response_dialogs.get('items')[count]).get('conversation')).get('peer')).get('id')
+            print(id)
+            print(unread_count)
 
 ##        return unread_conv_list
 
