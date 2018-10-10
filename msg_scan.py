@@ -61,6 +61,5 @@ class MsgScan(QThread):
 
 ##        return name
 
-
-r = MsgScan()
-print(read_token)
+if __name__ == "__main__":
+#debug
