@@ -12,6 +12,7 @@ class MsgScan(QThread):
     def __init__(self, parent = None):
         QThread.__init__(self, parent)
         self.delay = 5
+        self.token_file = "token.txt"
 
     def run(self):
         ''' Вызывается при запуске потока.
@@ -25,6 +26,17 @@ class MsgScan(QThread):
     def read_token(self):
         ''' Прочитать из файла и вернуть токен для запросов'''
 
+        try:
+            with open(self.token_file) as file:
+                return file.read().strip()
+        except FileNotFoundError:
+            print('FIle {} not found'.format(self.token_file))
+        except PermissionError:
+            print("Permission problem")
+        except IsADirectoryError:
+            print("It's a directory")
+        except:
+            print("Something wrong")
 ##        return token
 
     def get_conversations(self, token):
@@ -48,3 +60,7 @@ class MsgScan(QThread):
         ''' Вернуть имя и фамилию'''
 
 ##        return name
+
+
+r = MsgScan()
+print(read_token)
