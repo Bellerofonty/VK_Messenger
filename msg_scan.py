@@ -18,6 +18,10 @@ class MsgScan(QThread):
     def run(self):
         ''' Вызывается при запуске потока.
         Вызывать остальные методы отсюда.
+        # self.get_conversations(self.read_token())
+        self.get_history(id, unread_count, self.read_token())
+        # id - пользователя с кем выдать историю
+        # unread_count получить откуда то или задать вручную
 
         Вывод результата в лог:
             self.result_signal.emit(output)
@@ -26,6 +30,8 @@ class MsgScan(QThread):
 
     def read_token(self):
         ''' Прочитать из файла и вернуть токен для запросов'''
+        return 'token'
+        # тут может быть ваш токен
 
 ##        return token
 
@@ -53,10 +59,21 @@ class MsgScan(QThread):
 
     def get_history(self, id, unread_count, token):
         ''' Вернуть непрочитанные сообщения'''
-
-##        return messages
+        session = vk.Session(access_token=token)
+        api = vk.API(session, v='5.85')
+        messages_history = api.messages.getHistory(count = unread_count, user_id = id)
+        my_name = self.get_name(None, token)
+        id_name = self.get_name(id, token)
+        for messages in messages_history['items']:
+            print((id_name if messages['from_id'] == id else my_name) + ': ' + messages['text'])
 
     def get_name(self, id, token):
         ''' Вернуть имя и фамилию'''
+        session = vk.Session(access_token=token)
+        api = vk.API(session, v='5.85')
+        name = api.users.get(user_id = id)
+        return name[0]['first_name'] + ' ' + name[0]['last_name']
 
-##        return name
+
+msg_scan = MsgScan()
+msg_scan.run()
