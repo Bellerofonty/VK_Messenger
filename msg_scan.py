@@ -2,6 +2,8 @@
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
+import vk
+
 class MsgScan(QThread):
     ''' Запросы и извлечение информации из ответов'''
 
@@ -46,5 +48,7 @@ class MsgScan(QThread):
 
     def get_name(self, id, token):
         ''' Вернуть имя и фамилию'''
-
-##        return name
+        session = vk.Session(access_token=token)
+        api = vk.API(session, v='5.85')
+        name = api.account.getProfileInfo.first_name + api.account.getProfileInfo.last_name
+        return name
