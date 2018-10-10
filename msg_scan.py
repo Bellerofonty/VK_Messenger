@@ -30,7 +30,7 @@ class MsgScan(QThread):
             with open(self.token_file) as file:
                 return file.read().strip()
         except FileNotFoundError:
-            print('FIle {} not found'.format(self.token_file))
+            print('File {} not found'.format(self.token_file))
         except PermissionError:
             print("Permission problem")
         except IsADirectoryError:
