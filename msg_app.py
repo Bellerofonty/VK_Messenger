@@ -13,9 +13,9 @@ class VkMessApp(QtWidgets.QWidget, gui.Ui_VkMessenger):
         self.btn_start.clicked.connect(self.start_scan)
         self.btn_stop.clicked.connect(self.stop_scan)
         self.btn_login.clicked.connect(self.login)
+        self.thread = msg_scan.MsgScan() # Поиск в отдельном потоке
         self.thread.started.connect(self.on_started)
         self.thread.finished.connect(self.on_finished)
-        self.thread = msg_scan.MsgScan() # Поиск в отдельном потоке
         self.thread.result_signal.connect(self.show_result)
         self.thread.success_signal.connect(self.success_alarm)
 
