@@ -2,8 +2,6 @@
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
-import vk
-
 class MsgScan(QThread):
     ''' Запросы и извлечение информации из ответов'''
 
