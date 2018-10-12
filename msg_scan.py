@@ -2,6 +2,8 @@
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
+import vk
+
 class MsgScan(QThread):
     ''' Запросы и извлечение информации из ответов'''
 
@@ -57,6 +59,29 @@ class MsgScan(QThread):
 ##        return messages
 
     def get_name(self, id, token):
-        ''' Вернуть имя и фамилию'''
+        ''' Вернуть имя и фамилию,
+        (может работать как с ключом доступа пользователя,
+        так и с сервисным ключом доступа)'''
+        session = vk.Session(access_token=token)
+        api = vk.API(session, v='5.85')
+        user = api.users.get(user_id=id)
+        name = user[0]['first_name'] + ' ' + user[0]['last_name']
+        return name
 
-##        return name
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
