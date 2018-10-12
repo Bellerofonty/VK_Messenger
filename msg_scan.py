@@ -51,7 +51,6 @@ class MsgScan(QThread):
             if ((response_dialogs.get('items')[count]).get('conversation')).get('chat_settings') is None:
                 unread_conv_list.append({id: unread_count})
         # Возврат списка словарей в виде {id пользователя: Кол-во непрочитанных}
-        # print(unread_conv_list)
         return unread_conv_list
 
     def get_history(self, id, unread_count, token):
