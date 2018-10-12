@@ -38,18 +38,18 @@ class MsgScan(QThread):
         "unread_count"
         для каждого диалога
         '''
+        unread_conv_list = []
         session = vk.Session(access_token=token)
+        # Вероятно версию API стоит вынести в отдельную переменную для всех методов
         api = vk.API(session, v='5.85')
         # Получаем непрочитанные диалоги
         response_dialogs = api.messages.getConversations(filter='unread')
         for count in range(response_dialogs.get('count')):
-            # print(response_dialogs)
             unread_count = ((response_dialogs.get('items')[count]).get('conversation')).get('unread_count')
             id = (((response_dialogs.get('items')[count]).get('conversation')).get('peer')).get('id')
-            print(id)
-            print(unread_count)
-
-##        return unread_conv_list
+            unread_conv_list.append({id: unread_count})
+        # Возврат списка словарей в виде {id пользователя: Кол-во непрочитанных}
+        return unread_conv_list
 
     def get_history(self, id, unread_count, token):
         ''' Вернуть непрочитанные сообщения'''
