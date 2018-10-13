@@ -18,7 +18,6 @@ class MsgScan(QThread):
     def run(self):
         ''' Вызывается при запуске потока.
         Вызывать остальные методы отсюда.
-
         Вывод результата в лог:
             self.result_signal.emit(output)
         Сигнал о новом сообщении (окно разворачивается и всплывает):
@@ -38,20 +37,8 @@ class MsgScan(QThread):
         "unread_count"
         для каждого диалога
         '''
-        unread_conv_list = []
-        session = vk.Session(access_token=token)
-        # Вероятно версию API стоит вынести в отдельную переменную для всех методов
-        api = vk.API(session, v='5.85')
-        # Получаем непрочитанные диалоги
-        response_dialogs = api.messages.getConversations(filter='unread')
-        for count in range(response_dialogs.get('count')):
-            unread_count = ((response_dialogs.get('items')[count]).get('conversation')).get('unread_count')
-            id = (((response_dialogs.get('items')[count]).get('conversation')).get('peer')).get('id')
-            # Проверка на чат
-            if ((response_dialogs.get('items')[count]).get('conversation')).get('chat_settings') is None:
-                unread_conv_list.append({id: unread_count})
-        # Возврат списка словарей в виде {id пользователя: Кол-во непрочитанных}
-        return unread_conv_list
+
+##        return unread_conv_list
 
     def get_history(self, id, unread_count, token):
         ''' Вернуть непрочитанные сообщения'''
@@ -62,6 +49,7 @@ class MsgScan(QThread):
         return history
 
     def get_name(self, id, token):
+<<<<<<< HEAD
         ''' Вернуть имя и фамилию,
         (может работать как с ключом доступа пользователя,
         так и с сервисным ключом доступа)'''
@@ -72,3 +60,6 @@ class MsgScan(QThread):
         return name
 ##        return unread_conv_list
 
+=======
+        ''' Вернуть имя и фамилию'''
+>>>>>>> parent of 5945168... get_history = {id сообщения : [отправитель, текст сообщения]}
