@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -71,20 +70,3 @@ class MsgScan(QThread):
         user = api.users.get(user_id=id)
         name = user[0]['first_name'] + ' ' + user[0]['last_name']
         return name
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
