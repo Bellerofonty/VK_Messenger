@@ -55,8 +55,11 @@ class MsgScan(QThread):
 
     def get_history(self, id, unread_count, token):
         ''' Вернуть непрочитанные сообщения'''
-
-##        return messages
+        session = vk.Session(access_token=token)
+        api = vk.API(session, v='5.85')
+        messages_history = api.messages.getHistory(count = unread_count, user_id = id)['items'][::-1]
+        history = {messages['id']:[messages['from_id'], messages['text']] for messages in messages_history}
+        return history
 
     def get_name(self, id, token):
         ''' Вернуть имя и фамилию,
@@ -67,21 +70,3 @@ class MsgScan(QThread):
         user = api.users.get(user_id=id)
         name = user[0]['first_name'] + ' ' + user[0]['last_name']
         return name
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
