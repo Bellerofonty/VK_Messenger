@@ -2,6 +2,9 @@
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
+import requests
+import traceback
+
 class MsgScan(QThread):
     ''' Запросы и извлечение информации из ответов'''
 
@@ -14,6 +17,7 @@ class MsgScan(QThread):
         self.delay = 5
         self.token_file = "token.txt"
         self.token = self.read_token()
+        self.API_VERSION = 5.85
 
     def run(self):
         ''' Вызывается при запуске потока.
@@ -62,7 +66,23 @@ class MsgScan(QThread):
 
 ##        return name
 
-    
+    def mark_as_read(self, id):
+
+        base_string = "https://api.vk.com/method/{}?"
+        params  = {'access_token' : self.token, 'v' : self.API_VERSION, 'peer_id' : id}
+        method = "messages.markAsRead"
+        try:
+            #params.update('peer_id' : id)
+            request = requests.get(base_string.format(method), params=params).json()
+            #print(request)
+            if 'response' in request:
+                return request['response']
+            elif 'error' in request:
+                raise Exception(str(request['error']['error_msg']))
+        except Exception as e:
+            #print(e.args)
+            self.result_signal.emit(str(e.args))
+
 
 if __name__ == "__main__":
     pass
