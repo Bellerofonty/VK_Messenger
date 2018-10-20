@@ -36,8 +36,18 @@ class MsgScan(QThread):
 
     def read_token(self):
         ''' Прочитать из файла и вернуть токен для запросов'''
-        token = ''
-        return token
+
+        try:
+            with open(self.token_file) as file:
+                return file.read().strip()
+        except FileNotFoundError:
+            self.result_signal.emit('File not found')
+        except PermissionError:
+            self.result_signal.emit("Permission problem")
+        except IsADirectoryError:
+            self.result_signal.emit("It's a directory")
+        except:
+            self.result_signal.emit("Something wrong")
 
     def get_conversations(self, token, session):
         ''' Получить последние диалоги,
