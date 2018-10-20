@@ -24,10 +24,22 @@ class MsgScan(QThread):
         Сигнал о новом сообщении (окно разворачивается и всплывает):
             self.success_signal.emit()'''
 
+        output = []
+        token = self.read_token()
+        session = vk.Session(access_token=token)
+        unread_conv_list = self.get_conversations(token)
+        for dialog in unread_conv_list:
+            history = self.get_history(dialog['id'], dialog['unread_count'], token)
+            output.append({'msg_from': self.get_name(dialog['id'], token), 'msg': history})
+        print(output)
+
+        # self.result_signal.emit(output)
+        # self.success_signal.emit()
+
     def read_token(self):
         ''' Прочитать из файла и вернуть токен для запросов'''
-
-##        return token
+        token = '559957461b3d1cd38cfb545d1f4c94593de28f34c287bbe10c26b97b241ed0caaf0e0a533fa569b64fb5b'
+        return token
 
     def get_conversations(self, token):
         ''' Получить последние диалоги,
@@ -49,7 +61,7 @@ class MsgScan(QThread):
             id = (((response_dialogs.get('items')[count]).get('conversation')).get('peer')).get('id')
             # Проверка на чат
             if ((response_dialogs.get('items')[count]).get('conversation')).get('chat_settings') is None:
-                unread_conv_list.append({id: unread_count})
+                unread_conv_list.append({'id': id, 'unread_count': unread_count})
         # Возврат списка словарей в виде {id пользователя: Кол-во непрочитанных}
         return unread_conv_list
 
@@ -58,7 +70,7 @@ class MsgScan(QThread):
         session = vk.Session(access_token=token)
         api = vk.API(session, v='5.85')
         messages_history = api.messages.getHistory(count = unread_count, user_id = id)['items'][::-1]
-        history = {messages['id']:[messages['from_id'], messages['text']] for messages in messages_history}
+        history = [messages['text'] for messages in messages_history]
         return history
 
     def get_name(self, id, token):
