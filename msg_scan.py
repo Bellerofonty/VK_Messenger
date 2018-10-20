@@ -2,6 +2,8 @@
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
+import vk
+
 class MsgScan(QThread):
     ''' Запросы и извлечение информации из ответов'''
 
@@ -22,10 +24,22 @@ class MsgScan(QThread):
         Сигнал о новом сообщении (окно разворачивается и всплывает):
             self.success_signal.emit()'''
 
+        output = []
+        token = self.read_token()
+        session = vk.Session(access_token=token)
+        unread_conv_list = self.get_conversations(token)
+        for dialog in unread_conv_list:
+            history = self.get_history(dialog['id'], dialog['unread_count'], token)
+            output.append({'msg_from': self.get_name(dialog['id'], token), 'msg': history})
+        print(output)
+
+        # self.result_signal.emit(output)
+        # self.success_signal.emit()
+
     def read_token(self):
         ''' Прочитать из файла и вернуть токен для запросов'''
-
-##        return token
+        token = '559957461b3d1cd38cfb545d1f4c94593de28f34c287bbe10c26b97b241ed0caaf0e0a533fa569b64fb5b'
+        return token
 
     def get_conversations(self, token):
         ''' Получить последние диалоги,
@@ -36,15 +50,35 @@ class MsgScan(QThread):
         "unread_count"
         для каждого диалога
         '''
-
-##        return unread_conv_list
+        unread_conv_list = []
+        session = vk.Session(access_token=token)
+        # Вероятно версию API стоит вынести в отдельную переменную для всех методов
+        api = vk.API(session, v='5.85')
+        # Получаем непрочитанные диалоги
+        response_dialogs = api.messages.getConversations(filter='unread')
+        for count in range(response_dialogs.get('count')):
+            unread_count = ((response_dialogs.get('items')[count]).get('conversation')).get('unread_count')
+            id = (((response_dialogs.get('items')[count]).get('conversation')).get('peer')).get('id')
+            # Проверка на чат
+            if ((response_dialogs.get('items')[count]).get('conversation')).get('chat_settings') is None:
+                unread_conv_list.append({'id': id, 'unread_count': unread_count})
+        # Возврат списка словарей в виде {id пользователя: Кол-во непрочитанных}
+        return unread_conv_list
 
     def get_history(self, id, unread_count, token):
         ''' Вернуть непрочитанные сообщения'''
-
-##        return messages
+        session = vk.Session(access_token=token)
+        api = vk.API(session, v='5.85')
+        messages_history = api.messages.getHistory(count = unread_count, user_id = id)['items'][::-1]
+        history = [messages['text'] for messages in messages_history]
+        return history
 
     def get_name(self, id, token):
-        ''' Вернуть имя и фамилию'''
-
-##        return name
+        ''' Вернуть имя и фамилию,
+        (может работать как с ключом доступа пользователя,
+        так и с сервисным ключом доступа)'''
+        session = vk.Session(access_token=token)
+        api = vk.API(session, v='5.85')
+        user = api.users.get(user_id=id)
+        name = user[0]['first_name'] + ' ' + user[0]['last_name']
+        return name
