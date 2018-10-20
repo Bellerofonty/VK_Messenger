@@ -24,12 +24,22 @@ class MsgScan(QThread):
         Сигнал о новом сообщении (окно разворачивается и всплывает):
             self.success_signal.emit()'''
 
+        token = self.read_token()
+        session = vk.Session(access_token=token)
+        unread_conv_list = self.get_conversations(token, session)
+        for dialog in unread_conv_list:
+            history = self.get_history(dialog['id'], dialog['unread_count'], token, session)
+            sender = self.get_name(dialog['id'], token, session)
+            output = '{}\n'.format(history)
+            self.result_signal.emit(output)
+            self.success_signal.emit()
+
     def read_token(self):
         ''' Прочитать из файла и вернуть токен для запросов'''
+        token = ''
+        return token
 
-##        return token
-
-    def get_conversations(self, token):
+    def get_conversations(self, token, session):
         ''' Получить последние диалоги,
         вернуть те, где есть непрочитанные сообщения'''
 
@@ -39,7 +49,6 @@ class MsgScan(QThread):
         для каждого диалога
         '''
         unread_conv_list = []
-        session = vk.Session(access_token=token)
         # Вероятно версию API стоит вынести в отдельную переменную для всех методов
         api = vk.API(session, v='5.85')
         # Получаем непрочитанные диалоги
@@ -49,23 +58,21 @@ class MsgScan(QThread):
             id = (((response_dialogs.get('items')[count]).get('conversation')).get('peer')).get('id')
             # Проверка на чат
             if ((response_dialogs.get('items')[count]).get('conversation')).get('chat_settings') is None:
-                unread_conv_list.append({id: unread_count})
+                unread_conv_list.append({'id': id, 'unread_count': unread_count})
         # Возврат списка словарей в виде {id пользователя: Кол-во непрочитанных}
         return unread_conv_list
 
-    def get_history(self, id, unread_count, token):
+    def get_history(self, id, unread_count, token, session):
         ''' Вернуть непрочитанные сообщения'''
-        session = vk.Session(access_token=token)
         api = vk.API(session, v='5.85')
         messages_history = api.messages.getHistory(count = unread_count, user_id = id)['items'][::-1]
-        history = {messages['id']:[messages['from_id'], messages['text']] for messages in messages_history}
+        history = {messages['id']: [messages['from_id'], messages['text']] for messages in messages_history}
         return history
 
-    def get_name(self, id, token):
+    def get_name(self, id, token, session):
         ''' Вернуть имя и фамилию,
         (может работать как с ключом доступа пользователя,
         так и с сервисным ключом доступа)'''
-        session = vk.Session(access_token=token)
         api = vk.API(session, v='5.85')
         user = api.users.get(user_id=id)
         name = user[0]['first_name'] + ' ' + user[0]['last_name']
