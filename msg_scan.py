@@ -14,6 +14,7 @@ class MsgScan(QThread):
     def __init__(self, parent = None):
         QThread.__init__(self, parent)
         self.delay = 5
+        self.token_file = 'token.txt'
 
     def run(self):
         ''' Вызывается при запуске потока.
