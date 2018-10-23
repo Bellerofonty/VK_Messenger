@@ -30,10 +30,11 @@ class MsgScan(QThread):
         unread_conv_list = self.get_conversations(token, session)
         for dialog in unread_conv_list:
             history = self.get_history(dialog['id'], dialog['unread_count'], token, session)
-            sender = self.get_name(dialog['id'], token, session)
-            output = '{}\n'.format(history)
-            self.result_signal.emit(output)
-            self.success_signal.emit()
+            for messages in history.values():
+                sender = self.get_name(messages[0], token, session)
+                output = '{}: {}\n'.format(sender, messages[1])
+                self.result_signal.emit(output)
+                self.success_signal.emit()
 
     def read_token(self):
         ''' Прочитать из файла и вернуть токен для запросов'''
