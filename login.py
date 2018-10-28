@@ -12,14 +12,24 @@ Last edited: October 2018
 '''
 
 import vk
-import sys
-from datetime import datetime
+from vk.exceptions import VkAuthError
 
+import sys
+
+from queue import Queue
+
+from PyQt5.QtCore import \
+    Qt, \
+    QThread, \
+    pyqtSignal
 
 from PyQt5.QtWidgets import \
     QInputDialog,\
     QLineEdit,\
-    QApplication
+    QApplication,\
+    QPushButton,\
+    QMessageBox,\
+    QWidget
 
 '''
 Applications ID. Is necessary for auth procedure.
@@ -27,66 +37,159 @@ ID приложения. Необходим для процедуры автор
 '''
 CLIENT_ID = '6713283'
 
+q = Queue()
+'''Make a queue to exchange values between threads.
+Создание очереди для обмена значениями между потоками.'''
 
-class Token:
-    '''
-    Class giving file txt object with access_token inside.
-    Класс, выдающий объект - файл txt с токеном.
-    '''
-    def __init__(self):
 
-        self.app_dialog = QApplication(sys.argv)
-        ''' Initialize QApp for QInputDialogs.
-        Инициализация QApp сущности для QInputDialogs диалогов.'''
+class Test_GUI(QWidget):
+    '''GUI class ONLY for TESTING login thread consistency.
+    Создание GUI для ТЕСТИРОВАНИЯ потока идентификации.'''
+    def __init__(self, parent=None):
+        super().__init__()
 
-        self.write_token_to_file()
+        self.initUI()
 
-    def get_credentials(self):
-        '''
-        Method of getting VK user credentials.
-        Метод получения имени и пароля пользователя VK.
-        '''
-        _login, ok = QInputDialog.getText(
+    def initUI(self):
+        self.setGeometry(300, 300, 250, 150)
+        self.setWindowTitle('Test_GUI')
+
+        btn_login = QPushButton('Login', self)
+        '''Minimalistic login button.
+        Минималистичная кнопка залогинивания.'''
+        btn_login.clicked.connect(self.login_clicked)
+
+    def login_clicked(self):
+        self.call_login_thread = Login_Thread()
+        '''Use self.<> because of making reference for not being
+        thrown away by garbage collector after handling __init__.
+        Использовать self.<> в упоминании метода, чтобы сборщик
+        мусора не выкинул поток после первого прохода __init__.'''
+
+        '''Signals connected to internal methods.
+        Сигналы, законнекченные к внутренним методам.'''
+        self.call_login_thread.\
+            success_signal.connect(self.show_signal)
+        self.call_login_thread.\
+            result_signal.connect(self.show_signal)
+        self.call_login_thread.\
+            login_signal.connect(self.login_signal)
+
+        self.call_login_thread.start()
+
+    def show_signal(self, text_arg):
+        '''Notify about success/error in thread.
+        Извещение о успехе/ошибке в потоке.'''
+        self.display_msg = QMessageBox()
+        self.display_msg.about(self, 'Notification', text_arg)
+
+    def login_signal(self):
+        '''Method of getting VK user credentials. Carried out to
+        GUI to avoid QTimer error, because it is deprecated to call
+        any GUI functions from thread other than the main thread.
+        Метод получения имени и пароля пользователя VK;
+        Вынесен в GUI, чтобы избежать ошибки QTimer error, потому
+        как вызов функций GUI разрешён только из главного потока.'''
+        login, ok = QInputDialog.getText(
             None,
             'VKMessenger Authorization',
             'type {}'.format('Login'),
             QLineEdit.Normal
         )
 
-        _password, ok = QInputDialog.getText(
+        password, ok = QInputDialog.getText(
             None,
             'VKMessenger Authorization',
             'type {}'.format('Password'),
             QLineEdit.Password
         )
 
-        return _login, _password
+        '''Put credentials to queue to get them from another thread.
+        Кладём переменные в очередь, чтобы использовать их в
+        другом потоке.'''
+        q.put(login)
+        q.put(password)
 
-    def write_token_to_file(self):
-        _login, _password = self.get_credentials()
+    def keyPressEvent(self, event):
+        '''Simple method for usability. Press 'q' to quit GUI.
+        Простой метод для использования кнопки для выхода из GUI.'''
+        if event.key() == Qt.Key_Q:
+            self.close()
 
-        '''
-        Start auth session by requests to VK API.
-        Инициализация сессии авторизации запросами к VK API.
-        '''
+
+class Login_Thread(QThread):
+    '''QThread subclass, giving file object with access_token inside.
+    Поток, выдающий объект - файл txt с токеном.'''
+
+    success_signal = pyqtSignal(str)
+    result_signal = pyqtSignal(str)
+    login_signal = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__()
+
+    def run(self):
+        '''Main method of thread.
+        Основной метод потока.'''
+        try:
+            self._get_credentials()
+
+            '''Geting values from queue.
+            Получаем значения, отправленные раннее в очередь.'''
+            _login = q.get()
+            _password = q.get()
+
+            token = self._request_token(_login, _password)
+
+            self._write_token_to_file(token)
+
+            self.success_signal.emit(
+                'Token has been written\n'
+                'Токен записан в файл')
+
+        except VkAuthError:
+            self.result_signal.emit(
+                'Not valid login or password\n'
+                'Неверный логин или пароль')
+
+        self.exit()  # or could use sys.exit()
+        '''Close Thread. Закрытие потока.'''
+
+    def _get_credentials(self):
+        '''Detach operations to main thread.
+        Передача действий в главный поток.'''
+        self.login_signal.emit()
+
+    def _request_token(self, login, password):
+        '''Start auth session by requests to VK API.
+        Инициализация сессии авторизации запросами к VK API.'''
         self.session = vk.AuthSession(
             app_id=CLIENT_ID,
-            user_login=_login,
-            user_password=_password,
-            scope='4096'
+            user_login=login,
+            user_password=password,
+            scope='4096',
         )
 
-        with open('token.txt', 'w+') as f:
-            f.write(str(self.session.get_access_token() +
-                        datetime.now().strftime('_%Y.%m.%d_%H:%M:%S_')))
+        return self.session.get_access_token()
 
-        return sys.exit('That`s it: token is placed in a file!')
-        '''
-        Code freeze without that essential string. Need research.
-        Надо выяснить, почему скрипт не завершается без этой строки.
-        '''
+    def _write_token_to_file(self, token):
+
+        with open('token.txt', 'w+') as f:
+            f.write(token)
+
+            '''TO-DO.
+            Requesting to add as needed.
+            Запрос на добавление записи timestamp о получении токена.
+            + datetime.now().strftime('_%Y.%m.%d_%H:%M:%S_')))'''
+
+        return None
 
 
 if __name__ == '__main__':
 
-    token = Token()
+    test_app = QApplication(sys.argv)
+
+    test_login = Test_GUI()
+    test_login.show()
+
+    sys.exit(test_app.exec_())
