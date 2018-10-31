@@ -29,11 +29,11 @@ class MsgScan(QThread):
 
         token = self.read_token()
         session = vk.Session(access_token=token)
-        unread_conv_list = self.get_conversations(token, session)
+        unread_conv_list = self.get_conversations(session)
         for dialog in unread_conv_list:
-            history = self.get_history(dialog['id'], dialog['unread_count'], token, session)
+            history = self.get_history(dialog['id'], dialog['unread_count'], session)
             for messages in history.values():
-                sender = self.get_name(messages[0], token, session)
+                sender = self.get_name(messages[0], session)
                 output = '{}: {}\n'.format(sender, messages[1])
                 self.result_signal.emit(output)
                 self.success_signal.emit()

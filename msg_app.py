@@ -18,8 +18,8 @@ class VkMessApp(QtWidgets.QWidget, gui.Ui_VkMessenger):
         self.thread.finished.connect(self.on_finished)
         self.thread.result_signal.connect(self.show_result)
         self.thread.success_signal.connect(self.success_alarm)
-        self.btn_login.clicked.connect(self.login)
-        self.login_thread = login.Login_Thread()
+##        self.btn_login.clicked.connect(self.login)
+##        self.login_thread = login.Login_Thread()
 
     def start_scan(self):
         self.thread.start()
@@ -48,6 +48,6 @@ class VkMessApp(QtWidgets.QWidget, gui.Ui_VkMessenger):
         self.showNormal()
         self.activateWindow()
 
-    def login(self):
-        ''' Вызов авторизации'''
-        self.login_thread.start()
+##    def login(self):
+##        ''' Вызов авторизации'''
+##        self.login_thread.start()
