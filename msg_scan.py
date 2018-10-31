@@ -3,6 +3,7 @@
 from PyQt5.QtCore import QThread, pyqtSignal
 
 import vk
+import requests
 
 class MsgScan(QThread):
     ''' Запросы и извлечение информации из ответов'''
@@ -14,7 +15,8 @@ class MsgScan(QThread):
     def __init__(self, parent = None):
         QThread.__init__(self, parent)
         self.delay = 5
-        self.token_file = 'token.txt'
+        self.token_file = "token.txt"
+        self.API_VERSION = 5.85
 
     def run(self):
         ''' Вызывается при запуске потока.
@@ -51,7 +53,7 @@ class MsgScan(QThread):
         except:
             self.result_signal.emit("Something wrong")
 
-    def get_conversations(self, token, session):
+    def get_conversations(self, session):
         ''' Получить последние диалоги,
         вернуть те, где есть непрочитанные сообщения'''
 
@@ -74,14 +76,14 @@ class MsgScan(QThread):
         # Возврат списка словарей в виде {id пользователя: Кол-во непрочитанных}
         return unread_conv_list
 
-    def get_history(self, id, unread_count, token, session):
+    def get_history(self, id, unread_count, session):
         ''' Вернуть непрочитанные сообщения'''
         api = vk.API(session, v='5.85')
         messages_history = api.messages.getHistory(count = unread_count, user_id = id)['items'][::-1]
         history = {messages['id']: [messages['from_id'], messages['text']] for messages in messages_history}
         return history
 
-    def get_name(self, id, token, session):
+    def get_name(self, id, session):
         ''' Вернуть имя и фамилию,
         (может работать как с ключом доступа пользователя,
         так и с сервисным ключом доступа)'''
@@ -89,3 +91,20 @@ class MsgScan(QThread):
         user = api.users.get(user_id=id)
         name = user[0]['first_name'] + ' ' + user[0]['last_name']
         return name
+
+    def mark_as_read(self, id, token):
+
+        base_string = "https://api.vk.com/method/{}?"
+        params  = {'access_token' : token, 'v' : self.API_VERSION, 'peer_id' : id}
+        method = "messages.markAsRead"
+        try:
+            #params.update('peer_id' : id)
+            request = requests.get(base_string.format(method), params=params).json()
+            #print(request)
+            if 'response' in request:
+                return request['response']
+            elif 'error' in request:
+                raise Exception(str(request['error']['error_msg']))
+        except Exception as e:
+            #print(e.args)
+            self.result_signal.emit(str(e.args))
