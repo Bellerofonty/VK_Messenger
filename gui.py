@@ -4,7 +4,7 @@
 #
 # Created by: PyQt5 UI code generator 5.10
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 class Ui_VkMessenger(object):
     def setupUi(self, VkMessenger):

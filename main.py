@@ -5,9 +5,7 @@ import sys
 
 from PyQt5 import QtWidgets
 
-import gui
 import msg_app
-import msg_scan
 
 
 def main():
